@@ -39,6 +39,7 @@ mod proto_file {
 
 /// chat module function handling
 pub struct Chat {}
+pub struct QaulMenu {}
 
 impl Chat {
     /// CLI command interpretation
@@ -275,6 +276,7 @@ impl Chat {
             Ok(chat) => {
                 match chat.message {
                     Some(proto::chat::Message::ConversationList(proto_conversation)) => {
+                        let group_id_byte = proto_conversation.clone().group_id;
                         // Conversation table
                         let group_id =
                             uuid::Uuid::from_bytes(proto_conversation.group_id.try_into().unwrap());
@@ -309,6 +311,10 @@ impl Chat {
                                     );
 
                                     for s in ss {
+
+                                        // This part does not have any mapping with matrix room.
+                                        // Show and navigate with help command.
+                                        QaulMenu::help(group_id_byte.clone());
                                         println!("\t{}", s);
                                     }
                                     println!("");
@@ -350,6 +356,8 @@ impl Chat {
                                         );
 
                                         for s in ss {
+                                            // This part is mapped with the matrix room.
+                                            // Allow inviting the users or removing them.
                                             Self::matrix_send(&s, &room_id, user_name.clone());
                                             println!("\t{}", s);
                                         }
@@ -399,5 +407,13 @@ impl Chat {
             }
         }
         None
+    }
+}
+
+impl QaulMenu {
+    pub fn help(group_id: Vec<u8>) {
+        let msg = format!("/users : To know all the existing users in matrix room.\n/invite : To invite users into the existing room.");
+        Chat::send_chat_message(group_id, msg);
+        //
     }
 }
